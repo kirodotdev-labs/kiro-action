@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: karancode/kiro-action@main
+      - uses: karancode/kiro-action@v0
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
           # --agent loads .kiro/agents/code-reviewer.json

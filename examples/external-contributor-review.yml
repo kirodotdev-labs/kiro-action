@@ -27,7 +27,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - uses: karancode/kiro-action@main
+      - uses: karancode/kiro-action@v0
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
           prompt: |

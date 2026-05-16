@@ -1,5 +1,10 @@
 # kiro-action
 
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-kiro--action-blue?logo=github)](https://github.com/marketplace/actions/kiro-action)
+[![Release](https://img.shields.io/github/v/release/karancode/kiro-action?logo=github)](https://github.com/karancode/kiro-action/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/karancode/kiro-action/actions/workflows/ci.yml/badge.svg)](https://github.com/karancode/kiro-action/actions/workflows/ci.yml)
+
 A GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — on your pull requests, issues, and schedules. Mention `/kiro` in a comment, assign an issue to the `kiro` user, or run it from a workflow with an explicit prompt. Kiro reads the context, writes the code, and opens a pull request.
 
 It's [headless mode](https://kiro.dev/docs/cli/headless), wired up to GitHub.
@@ -43,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: karancode/kiro-action@v1
+      - uses: karancode/kiro-action@v0
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
 ```
