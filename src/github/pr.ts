@@ -41,28 +41,42 @@ export async function checkoutPrBranch(
   return headRef;
 }
 
-export async function commitAndPush(branchName: string, message: string): Promise<boolean> {
-  let hasChanges = false;
-
+export async function commitAndPush(
+  branchName: string,
+  message: string,
+  compareRef: string
+): Promise<boolean> {
   await exec.exec("git", ["config", "user.name", "kiro-bot"]);
   await exec.exec("git", ["config", "user.email", "kiro-bot@users.noreply.github.com"]);
 
+  // Commit any working-tree changes Kiro left uncommitted.
   let statusOutput = "";
   await exec.exec("git", ["status", "--porcelain"], {
     listeners: { stdout: (data) => { statusOutput += data.toString(); } },
   });
+  if (statusOutput.trim()) {
+    await exec.exec("git", ["add", "-A"]);
+    await exec.exec("git", ["commit", "-m", message]);
+  }
 
-  if (!statusOutput.trim()) {
-    core.info("No file changes detected — skipping commit.");
+  // Recent versions of Kiro CLI commit changes themselves, so a clean working
+  // tree doesn't mean nothing happened. Compare against the ref we'd push to
+  // and only skip if there's truly nothing new to publish.
+  let countOutput = "";
+  await exec.exec("git", ["rev-list", "--count", `${compareRef}..HEAD`], {
+    listeners: { stdout: (data) => { countOutput += data.toString(); } },
+    ignoreReturnCode: true,
+  });
+  const commitsAhead = parseInt(countOutput.trim(), 10) || 0;
+
+  if (commitsAhead === 0) {
+    core.info(`No new commits ahead of ${compareRef} — skipping push.`);
     return false;
   }
 
-  hasChanges = true;
-  await exec.exec("git", ["add", "-A"]);
-  await exec.exec("git", ["commit", "-m", message]);
   await exec.exec("git", ["push", "origin", branchName]);
-  core.info(`Committed and pushed changes to ${branchName}`);
-  return hasChanges;
+  core.info(`Pushed ${commitsAhead} commit(s) to ${branchName}`);
+  return true;
 }
 
 export async function openPullRequest(

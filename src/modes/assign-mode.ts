@@ -41,7 +41,11 @@ export async function runAssignMode(
     const displaySummary = summary ?? output;
     const baseBranch = await getDefaultBranch(octokit, ctx.owner, ctx.repo);
     const branchName = await createBranch("issue", issueNumber);
-    const hadChanges = await commitAndPush(branchName, `chore: kiro changes for #${issueNumber}`);
+    const hadChanges = await commitAndPush(
+      branchName,
+      `chore: kiro changes for #${issueNumber}`,
+      `origin/${baseBranch}`
+    );
 
     let prUrl: string | undefined;
     if (hadChanges) {
