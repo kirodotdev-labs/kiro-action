@@ -3,6 +3,7 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 const inputs: Record<string, string> = {};
 const execCalls: string[][] = [];
 let statusOutput = "";
+let revListCount = "0\n";
 
 mock.module("@actions/core", () => ({
   getInput: (name: string) => inputs[name] ?? "",
@@ -16,9 +17,11 @@ mock.module("@actions/github", () => ({ getOctokit: () => ({}) }));
 mock.module("@actions/exec", () => ({
   exec: async (cmd: string, args: string[], opts?: { listeners?: { stdout?: (d: Buffer) => void } }) => {
     execCalls.push([cmd, ...args]);
-    // Feed mock status output when git status --porcelain is called
     if (args.includes("--porcelain") && opts?.listeners?.stdout) {
       opts.listeners.stdout(Buffer.from(statusOutput));
+    }
+    if (args[0] === "rev-list" && opts?.listeners?.stdout) {
+      opts.listeners.stdout(Buffer.from(revListCount));
     }
     return 0;
   },
@@ -94,21 +97,42 @@ describe("commitAndPush", () => {
   beforeEach(() => {
     execCalls.length = 0;
     statusOutput = "";
+    revListCount = "0\n";
   });
 
-  it("returns false and skips commit when no changes", async () => {
+  it("returns false and skips push when working tree is clean and branch has no new commits", async () => {
     statusOutput = "";
-    const result = await commitAndPush("kiro/1-fix", "chore: kiro changes");
+    revListCount = "0\n";
+    const result = await commitAndPush("kiro/1-fix", "chore: kiro changes", "origin/main");
     expect(result).toBe(false);
     expect(execCalls.some((c) => c.includes("commit"))).toBe(false);
+    expect(execCalls.some((c) => c.includes("push"))).toBe(false);
   });
 
-  it("commits and pushes when there are changes", async () => {
+  it("commits dirty files and pushes when working tree has changes", async () => {
     statusOutput = "M  src/foo.ts\n";
-    const result = await commitAndPush("kiro/1-fix", "chore: kiro changes");
+    revListCount = "1\n";
+    const result = await commitAndPush("kiro/1-fix", "chore: kiro changes", "origin/main");
     expect(result).toBe(true);
     expect(execCalls.some((c) => c.includes("commit"))).toBe(true);
     expect(execCalls.some((c) => c.includes("push"))).toBe(true);
+  });
+
+  it("pushes when Kiro committed changes itself (clean tree, commits ahead)", async () => {
+    statusOutput = "";
+    revListCount = "2\n";
+    const result = await commitAndPush("kiro/1-fix", "chore: kiro changes", "origin/main");
+    expect(result).toBe(true);
+    expect(execCalls.some((c) => c.includes("commit"))).toBe(false);
+    expect(execCalls.some((c) => c.includes("push"))).toBe(true);
+  });
+
+  it("compares against the provided ref (not hardcoded main)", async () => {
+    statusOutput = "";
+    revListCount = "1\n";
+    await commitAndPush("kiro/feat/x", "msg", "origin/feature-branch");
+    const revListCall = execCalls.find((c) => c.includes("rev-list"));
+    expect(revListCall).toContain("origin/feature-branch..HEAD");
   });
 });
 

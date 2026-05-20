@@ -73,7 +73,11 @@ export async function runCommentMode(
     if (isOnPr) {
       // Comment on an existing PR — push to its branch directly
       branchName = await checkoutPrBranch(octokit, ctx.owner, ctx.repo, ctx.prNumber!);
-      const hadChanges = await commitAndPush(branchName, `chore: kiro changes for #${issueNumber}`);
+      const hadChanges = await commitAndPush(
+        branchName,
+        `chore: kiro changes for #${issueNumber}`,
+        `origin/${branchName}`
+      );
 
       const prHtmlUrl = `https://github.com/${ctx.owner}/${ctx.repo}/pull/${ctx.prNumber}`;
       const finalBody = hadChanges
@@ -87,7 +91,11 @@ export async function runCommentMode(
       // Comment on an issue — create a fresh timestamped branch and open a PR
       const baseBranch = await getDefaultBranch(octokit, ctx.owner, ctx.repo);
       branchName = await createBranch("issue", issueNumber);
-      const hadChanges = await commitAndPush(branchName, `chore: kiro changes for #${issueNumber}`);
+      const hadChanges = await commitAndPush(
+        branchName,
+        `chore: kiro changes for #${issueNumber}`,
+        `origin/${baseBranch}`
+      );
 
       if (hadChanges) {
         const fallbackTitle = ctx.issueTitle ?? `Kiro changes for #${issueNumber}`;
