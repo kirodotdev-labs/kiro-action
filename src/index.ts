@@ -4,7 +4,7 @@ import { validateAuth } from "./utils/auth.js";
 import { parseGithubContext } from "./github/context.js";
 import { detectMode } from "./modes/detect.js";
 import { runCommentMode } from "./modes/comment-mode.js";
-import { runAssignMode } from "./modes/assign-mode.js";
+import { runIssueMode } from "./modes/issue-mode.js";
 import { runAutoMode } from "./modes/auto-mode.js";
 
 async function run(): Promise<void> {
@@ -28,8 +28,11 @@ async function run(): Promise<void> {
       case "comment":
         result = await runCommentMode(ctx, apiKey);
         break;
+      case "label":
+        result = await runIssueMode(ctx, apiKey, "label");
+        break;
       case "assign":
-        result = await runAssignMode(ctx, apiKey);
+        result = await runIssueMode(ctx, apiKey, "assign");
         break;
       case "auto":
         result = await runAutoMode(ctx, apiKey);

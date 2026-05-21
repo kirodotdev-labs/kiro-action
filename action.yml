@@ -21,6 +21,10 @@ inputs:
     description: 'Comment phrase that activates Kiro'
     default: '/kiro'
     required: false
+  label_trigger:
+    description: 'Label name that activates Kiro when added to an issue or PR'
+    default: 'kiro'
+    required: false
   assignee_trigger:
     description: 'GitHub username whose assignment triggers Kiro'
     default: 'kirocli'

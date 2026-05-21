@@ -12,13 +12,46 @@ import {
 } from "../github/pr.js";
 import { parseKiroOutput } from "../utils/extract-output.js";
 
-export async function runAssignMode(
+export type IssueTriggerSource = "assign" | "label";
+
+type Octokit = ReturnType<typeof github.getOctokit>;
+
+async function hasWriteAccess(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  username: string
+): Promise<boolean> {
+  try {
+    const { data } = await octokit.rest.repos.getCollaboratorPermissionLevel({
+      owner,
+      repo,
+      username,
+    });
+    return ["admin", "write"].includes(data.permission);
+  } catch {
+    return false;
+  }
+}
+
+export async function runIssueMode(
   ctx: GithubContext,
-  apiKey: string
+  apiKey: string,
+  triggerSource: IssueTriggerSource
 ): Promise<{ branchName?: string; prUrl?: string; output: string }> {
   const token = core.getInput("github_token", { required: true });
   const octokit = github.getOctokit(token);
   const issueNumber = ctx.prNumber ?? ctx.issueNumber!;
+
+  // Label trigger has broader permissions than assign — gate it on write access.
+  // Assign trigger is implicitly gated by GitHub's own assignee permission model.
+  if (triggerSource === "label" && ctx.sender) {
+    const allowed = await hasWriteAccess(octokit, ctx.owner, ctx.repo, ctx.sender);
+    if (!allowed) {
+      core.info(`User ${ctx.sender} lacks write access — ignoring label trigger.`);
+      return { output: "" };
+    }
+  }
 
   const commentId = await postProgressComment(octokit, ctx.owner, ctx.repo, issueNumber);
 

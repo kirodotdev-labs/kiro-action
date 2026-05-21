@@ -77,4 +77,54 @@ describe("parseGithubContext", () => {
     expect(ctx.issueNumber).toBeUndefined();
     expect(ctx.prNumber).toBeUndefined();
   });
+
+  it("parses issues.labeled event with label name and sender", () => {
+    const raw = makeRawCtx({
+      eventName: "issues",
+      payload: {
+        action: "labeled",
+        issue: { number: 11, title: "feature request", body: "do the thing" },
+        label: { name: "kiro", color: "ff0000" },
+        sender: { login: "carol" },
+      },
+    });
+    const ctx = parseGithubContext(raw);
+    expect(ctx.eventName).toBe("issues");
+    expect(ctx.action).toBe("labeled");
+    expect(ctx.label).toBe("kiro");
+    expect(ctx.sender).toBe("carol");
+    expect(ctx.issueNumber).toBe(11);
+  });
+
+  it("parses pull_request.labeled event", () => {
+    const raw = makeRawCtx({
+      eventName: "pull_request",
+      payload: {
+        action: "labeled",
+        pull_request: { number: 8, title: "feat: x", body: "" },
+        label: { name: "kiro" },
+        sender: { login: "dave" },
+      },
+    });
+    const ctx = parseGithubContext(raw);
+    expect(ctx.action).toBe("labeled");
+    expect(ctx.label).toBe("kiro");
+    expect(ctx.sender).toBe("dave");
+  });
+
+  it("captures sender on assigned events", () => {
+    const raw = makeRawCtx({
+      eventName: "issues",
+      payload: {
+        action: "assigned",
+        issue: { number: 3, title: "Bug", body: "" },
+        assignee: { login: "kiro" },
+        sender: { login: "alice" },
+      },
+    });
+    const ctx = parseGithubContext(raw);
+    expect(ctx.action).toBe("assigned");
+    expect(ctx.sender).toBe("alice");
+    expect(ctx.assignee).toBe("kiro");
+  });
 });

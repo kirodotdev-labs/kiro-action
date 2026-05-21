@@ -70,4 +70,82 @@ describe("detectMode", () => {
     const ctx = makeCtx({ eventName: "push" });
     expect(detectMode(ctx)).toBe("skip");
   });
+
+  it("returns label when issue is labeled with the trigger label", () => {
+    inputs["label_trigger"] = "kiro";
+    const ctx = makeCtx({
+      eventName: "issues",
+      action: "labeled",
+      label: "kiro",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("label");
+  });
+
+  it("returns label for pull_request labeled events", () => {
+    inputs["label_trigger"] = "kiro";
+    const ctx = makeCtx({
+      eventName: "pull_request",
+      action: "labeled",
+      label: "kiro",
+      prNumber: 9,
+    });
+    expect(detectMode(ctx)).toBe("label");
+  });
+
+  it("matches label trigger case-insensitively", () => {
+    inputs["label_trigger"] = "kiro";
+    const ctx = makeCtx({
+      eventName: "issues",
+      action: "labeled",
+      label: "Kiro",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("label");
+  });
+
+  it("does not fire label-mode on non-label issue actions", () => {
+    inputs["label_trigger"] = "kiro";
+    const ctx = makeCtx({
+      eventName: "issues",
+      action: "edited",
+      label: "kiro",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("skip");
+  });
+
+  it("respects custom label_trigger", () => {
+    inputs["label_trigger"] = "ai-fix";
+    const ctx = makeCtx({
+      eventName: "issues",
+      action: "labeled",
+      label: "ai-fix",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("label");
+  });
+
+  it("returns skip when labeled with a different label", () => {
+    inputs["label_trigger"] = "kiro";
+    const ctx = makeCtx({
+      eventName: "issues",
+      action: "labeled",
+      label: "bug",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("skip");
+  });
+
+  it("comment trigger takes priority over label trigger", () => {
+    inputs["trigger_phrase"] = "/kiro";
+    inputs["label_trigger"] = "kiro";
+    // comment events don't carry label, so this is testing that label doesn't override comment
+    const ctx = makeCtx({
+      eventName: "issue_comment",
+      commentBody: "/kiro fix",
+      issueNumber: 4,
+    });
+    expect(detectMode(ctx)).toBe("comment");
+  });
 });

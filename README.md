@@ -5,14 +5,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/karancode/kiro-action/actions/workflows/ci.yml/badge.svg)](https://github.com/karancode/kiro-action/actions/workflows/ci.yml)
 
-A GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — on your pull requests, issues, and schedules. Mention `/kiro` in a comment, assign an issue to the `kiro` user, or run it from a workflow with an explicit prompt. Kiro reads the context, writes the code, and opens a pull request.
+A GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — on your pull requests, issues, and schedules. Mention `/kiro` in a comment, label an issue with `kiro`, or run it from a workflow with an explicit prompt. Kiro reads the context, writes the code, and opens a pull request.
 
 It's [headless mode](https://kiro.dev/docs/cli/headless), wired up to GitHub.
 
 ## What you can do with it
 
 - **Comment on a PR or issue** — `/kiro fix the null deref in src/auth/login.ts` and Kiro pushes a fix
-- **Assign an issue** to `kiro` — Kiro reads the body, implements it, opens a PR
+- **Label an issue with `kiro`** — Kiro reads the body, implements it, opens a PR. No bot user needed.
 - **Run on a schedule** — weekly dependency upgrades, drift checks, doc sync, whatever you wire up
 - **Wrap it in a custom prompt** — security review on every PR, auto-fix CI failures, triage new issues
 
@@ -33,9 +33,9 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [assigned]
+    types: [labeled, assigned]
   pull_request:
-    types: [assigned]
+    types: [labeled, assigned]
 
 jobs:
   kiro:
@@ -79,7 +79,8 @@ That's it. For other patterns, copy a file from [`examples/`](examples/).
 | `github_token` | no | `github.token` | Token used for GitHub API calls. |
 | `prompt` | no | — | Explicit prompt for scheduled / push triggers. |
 | `trigger_phrase` | no | `/kiro` | Phrase that activates Kiro from comments. |
-| `assignee_trigger` | no | `kiro` | GitHub username whose assignment activates Kiro. |
+| `label_trigger` | no | `kiro` | Label whose addition to an issue or PR activates Kiro. |
+| `assignee_trigger` | no | `kirocli` | GitHub username whose assignment activates Kiro. |
 | `branch_prefix` | no | `kiro/` | Prefix for branches Kiro creates. |
 | `kiro_args` | no | `--trust-all-tools` | Extra flags passed through to `kiro-cli chat`. See [`kiro-cli chat --help`](https://kiro.dev/docs/cli/headless) for the full list. |
 
@@ -106,13 +107,16 @@ For pure review or triage workflows (no commits), `contents: read` is enough —
 
 ## How triggers work
 
-| Mode | Activates on | Behavior |
+| Mode | Activates on | When to use |
 |---|---|---|
-| **comment** | `issue_comment` or `pull_request_review_comment` containing the trigger phrase | Only repo collaborators with write access can trigger. Kiro posts a sticky progress comment, then updates it with the result. |
-| **assign** | `issues.assigned` or `pull_request.assigned` to the assignee user | Reads issue / PR body as the task. |
-| **auto** | Any event where `prompt:` is set on the action | Skips trigger detection — runs the prompt directly. |
+| **comment** | `/kiro <instruction>` on any issue or PR | Ad-hoc requests with a specific instruction |
+| **label** | `kiro` label added to an issue or PR | "This issue describes the work — go do it." Fits the way teams already triage. |
+| **auto** | Workflow with `prompt:` input set | Scheduled runs, PR review automation, anything event-driven |
+| **assign** | Assigning an issue or PR to the `kirocli` user | Less common — requires a real GitHub user. Most teams use **label** instead. |
 
-A repo can use any combination of these. They don't conflict.
+Detection priority: `auto` > `comment` > `label` > `assign`. A repo can use any combination — they don't conflict.
+
+`comment` and `label` triggers both check that the user has write access to the repo before running. `assign` is implicitly gated by GitHub's own permission model.
 
 ## Authentication
 

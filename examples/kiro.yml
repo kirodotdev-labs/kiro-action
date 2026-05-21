@@ -1,8 +1,10 @@
-# Default Kiro workflow — handles all three trigger modes.
+# Default Kiro workflow — handles all four trigger modes.
 #
 # Activates when:
 #   - someone comments "/kiro <instruction>" on an issue or PR
-#   - an issue or PR is assigned to the user "kiro"
+#   - an issue or PR is labeled with "kiro"
+#   - an issue or PR is assigned to the user "kirocli" (requires that user
+#     to be a collaborator — most teams use the label trigger instead)
 #
 # Kiro reads the context, implements the change, commits to a new branch,
 # and opens a pull request.
@@ -15,9 +17,9 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [assigned]
+    types: [labeled, assigned]
   pull_request:
-    types: [assigned]
+    types: [labeled, assigned]
 
 jobs:
   kiro:

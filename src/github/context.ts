@@ -14,12 +14,15 @@ export interface GithubContext {
   eventName: EventType;
   owner: string;
   repo: string;
+  action?: string;     // payload.action — e.g. "labeled", "assigned", "opened"
   issueNumber?: number;
   prNumber?: number;
   commentBody?: string;
   commentId?: number;
   commentAuthor?: string;
   assignee?: string;
+  label?: string;      // name of the label that was just added (when action === "labeled")
+  sender?: string;     // user that triggered the event (used for permission checks)
   prDiff?: string;
   issueBody?: string;
   issueTitle?: string;
@@ -37,6 +40,8 @@ export function parseGithubContext(
     eventName: eventName as EventType,
     owner,
     repo: repoName,
+    action: payload.action,
+    sender: payload.sender?.login,
   };
 
   switch (eventName) {
@@ -70,6 +75,7 @@ export function parseGithubContext(
       ctx.issueTitle = issue?.title;
       ctx.issueBody = issue?.body;
       ctx.assignee = payload.assignee?.login;
+      ctx.label = payload.label?.name;
       break;
     }
     case "pull_request": {
@@ -78,6 +84,7 @@ export function parseGithubContext(
       ctx.prTitle = pr?.title;
       ctx.prBody = pr?.body;
       ctx.assignee = payload.assignee?.login;
+      ctx.label = payload.label?.name;
       break;
     }
   }
