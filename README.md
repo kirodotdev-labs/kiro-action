@@ -1,5 +1,7 @@
 # kiro-action
 
+![Kiro Action](assets/kiro_action_asset.png)
+
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-kiro--action-blue?logo=github)](https://github.com/marketplace/actions/kiro-action)
 [![Release](https://img.shields.io/github/v/release/karancode/kiro-action?logo=github)](https://github.com/karancode/kiro-action/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
