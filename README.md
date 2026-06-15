@@ -63,7 +63,7 @@ That's it. For other patterns, copy a file from [`examples/`](examples/).
 
 | File | What it does |
 |---|---|
-| [`kiro.yml`](examples/kiro.yml) | The default — `/kiro` mentions and `kiro` assignments |
+| [`kiro.yml`](examples/kiro.yml) | The default — `/kiro` mentions, `kiro` labels, and assignments |
 | [`pr-review.yml`](examples/pr-review.yml) | Comprehensive review on every PR |
 | [`security-review.yml`](examples/security-review.yml) | OWASP-style review on sensitive paths only |
 | [`external-contributor-review.yml`](examples/external-contributor-review.yml) | Strict review for non-team PRs |
@@ -84,7 +84,27 @@ That's it. For other patterns, copy a file from [`examples/`](examples/).
 | `label_trigger` | no | `kiro` | Label whose addition to an issue or PR activates Kiro. |
 | `assignee_trigger` | no | `kirocli` | GitHub username whose assignment activates Kiro. |
 | `branch_prefix` | no | `kiro/` | Prefix for branches Kiro creates. |
-| `kiro_args` | no | `--trust-all-tools` | Extra flags passed through to `kiro-cli chat`. See [`kiro-cli chat --help`](https://kiro.dev/docs/cli/headless) for the full list. |
+| `kiro_args` | no | `--trust-all-tools` | Extra flags passed through to `kiro-cli chat` (see below). |
+
+### Passing Kiro CLI flags
+
+`kiro_args` forwards arguments straight to `kiro-cli chat`, so any current CLI flag works without an action update. Useful ones:
+
+```yaml
+# Control reasoning depth (low | medium | high | xhigh | max)
+kiro_args: '--trust-all-tools --effort high'
+
+# Restrict tool access instead of trusting everything
+kiro_args: '--trust-tools=read,grep,write'
+
+# Run a repo-defined agent (.kiro/agents/<name>.json)
+kiro_args: '--agent code-reviewer'
+
+# Fail fast if an MCP server can't start
+kiro_args: '--trust-all-tools --require-mcp-startup'
+```
+
+The action installs the latest stable Kiro CLI on each run, so new flags are available as soon as they ship. See [`kiro-cli chat --help`](https://kiro.dev/docs/cli/headless) for the full list.
 
 ## Outputs
 
@@ -122,9 +142,9 @@ Detection priority: `auto` > `comment` > `label` > `assign`. A repo can use any 
 
 ## Authentication
 
-Set `KIRO_API_KEY` to a Kiro API key from your account at [kiro.dev](https://kiro.dev). The action passes it to `kiro-cli` via environment variable — it's never logged or exposed to the prompt.
+Set `KIRO_API_KEY` to a Kiro API key from your account at [kiro.dev](https://kiro.dev) (requires a Pro/Pro+/Power subscription). The action passes it to `kiro-cli` via environment variable — it's never logged or exposed to the prompt.
 
-AWS IAM / SIGV4 authentication is on the roadmap upstream ([kirodotdev/kiro#5938](https://github.com/kirodotdev/kiro/issues/5938)) — once that lands, the action will support it without long-lived keys.
+`KIRO_API_KEY` is currently the only headless auth method. AWS IAM / SigV4 authentication via the credential chain is requested upstream ([kirodotdev/kiro#8431](https://github.com/kirodotdev/kiro/issues/8431)) but not yet available.
 
 ## Development
 
