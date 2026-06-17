@@ -1,12 +1,15 @@
 # kiro-action
 
-GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — in CI. Handles `/kiro` comment triggers, issue/PR assignment, and explicit prompt automation.
+GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — in CI. Handles `/kiro` comment triggers, issue/PR labels, assignment, and explicit prompt automation.
 
 ## Trigger modes
 
 - **comment** — `/kiro <instruction>` in any PR or issue comment
-- **assign** — Issue or PR assigned to `kiro` (or whatever `assignee_trigger` is set to)
+- **label** — Issue or PR labeled with `kiro` (or whatever `label_trigger` is set to)
+- **assign** — Issue or PR assigned to `kirocli` (or whatever `assignee_trigger` is set to)
 - **auto** — Explicit `prompt:` input on a scheduled or push workflow
+
+Detection priority: `auto` > `comment` > `label` > `assign`. `label` and `assign` share one handler (`issue-mode.ts`).
 
 ## Stack
 
@@ -28,7 +31,7 @@ src/
   modes/
     detect.ts              # Determines mode from event + inputs
     comment-mode.ts        # Handles /kiro comment trigger
-    assign-mode.ts         # Handles assignment trigger
+    issue-mode.ts          # Handles label + assignment triggers (shared)
     auto-mode.ts           # Handles explicit prompt: input
   prompt/build-prompt.ts   # Builds context-rich prompt for Kiro
   kiro/runner.ts           # Spawns kiro-cli chat --no-interactive, returns cleaned output
