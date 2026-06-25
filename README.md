@@ -4,7 +4,7 @@
 
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-kiro--action-blue?logo=github)](https://github.com/marketplace/actions/kiro-action)
 [![Release](https://img.shields.io/github/v/release/karancode/kiro-action?logo=github)](https://github.com/karancode/kiro-action/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/karancode/kiro-action/actions/workflows/ci.yml/badge.svg)](https://github.com/karancode/kiro-action/actions/workflows/ci.yml)
 
 A GitHub Action that runs [Kiro](https://kiro.dev) — AWS's agentic IDE and command-line interface — on your pull requests, issues, and schedules. Mention `/kiro` in a comment, label an issue with `kiro`, or run it from a workflow with an explicit prompt. Kiro reads the context, writes the code, and opens a pull request.
@@ -159,4 +159,4 @@ The bundled `dist/index.js` is committed and is what GitHub runs. Source lives i
 
 ## License
 
-MIT.
+[Apache License 2.0](LICENSE).
