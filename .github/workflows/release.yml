@@ -38,12 +38,14 @@ jobs:
         run: bun run build
 
       - name: Commit dist if changed
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status dist/ --porcelain)" ]; then
             git add dist/
-            git commit -m "chore: build dist for ${{ github.ref_name }}"
+            git commit -m "chore: build dist for ${REF_NAME}"
             git push origin HEAD:main
           fi
 

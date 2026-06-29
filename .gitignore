@@ -17,3 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# ASH security scan output (regenerated each run; config is tracked)
+.ash/ash_output/
+.ash/**/.DS_Store
