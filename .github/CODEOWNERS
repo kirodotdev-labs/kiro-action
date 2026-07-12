@@ -1,0 +1,6 @@
+# Code owners for kiro-action.
+# These owners are requested for review on every pull request and
+# are required reviewers when branch protection enforces CODEOWNERS.
+# See: https://docs.github.com/articles/about-code-owners
+
+* @karancode @kirodotdev-labs/kiroaction-maintainers
