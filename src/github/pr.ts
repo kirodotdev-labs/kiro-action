@@ -41,14 +41,28 @@ export async function checkoutPrBranch(
   return headRef;
 }
 
+// Set the committer identity before Kiro runs. Hosted runners have no git
+// identity configured, so any `git commit` fails without this.
+export async function configureGitIdentity(): Promise<void> {
+  await exec.exec("git", ["config", "user.name", "kiro-bot"]);
+  await exec.exec("git", ["config", "user.email", "kiro-bot@users.noreply.github.com"]);
+}
+
+// Snapshot HEAD before Kiro runs so we can count exactly the commits this run
+// adds, measured against the real pre-run state.
+export async function getHeadSha(): Promise<string> {
+  let out = "";
+  await exec.exec("git", ["rev-parse", "HEAD"], {
+    listeners: { stdout: (data) => { out += data.toString(); } },
+  });
+  return out.trim();
+}
+
 export async function commitAndPush(
   branchName: string,
   message: string,
   compareRef: string
 ): Promise<boolean> {
-  await exec.exec("git", ["config", "user.name", "kiro-bot"]);
-  await exec.exec("git", ["config", "user.email", "kiro-bot@users.noreply.github.com"]);
-
   // Commit any working-tree changes Kiro left uncommitted.
   let statusOutput = "";
   await exec.exec("git", ["status", "--porcelain"], {

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outfile dist/index.js --target node --minify",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test tests/*.test.ts && bun test tests/modes/*.test.ts",
     "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
     "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'"
   },
