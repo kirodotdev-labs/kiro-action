@@ -4,6 +4,7 @@ const inputs: Record<string, string> = {};
 const execCalls: string[][] = [];
 let statusOutput = "";
 let revListCount = "0\n";
+let headSha = "abcdef1234567890\n";
 
 mock.module("@actions/core", () => ({
   getInput: (name: string) => inputs[name] ?? "",
@@ -23,12 +24,22 @@ mock.module("@actions/exec", () => ({
     if (args[0] === "rev-list" && opts?.listeners?.stdout) {
       opts.listeners.stdout(Buffer.from(revListCount));
     }
+    if (args[0] === "rev-parse" && opts?.listeners?.stdout) {
+      opts.listeners.stdout(Buffer.from(headSha));
+    }
     return 0;
   },
 }));
 
-const { createBranch, checkoutPrBranch, commitAndPush, openPullRequest, getDefaultBranch } =
-  await import("../src/github/pr");
+const {
+  createBranch,
+  checkoutPrBranch,
+  commitAndPush,
+  configureGitIdentity,
+  getHeadSha,
+  openPullRequest,
+  getDefaultBranch,
+} = await import("../src/github/pr");
 
 function makeOctokit(overrides: Record<string, unknown> = {}) {
   return {
@@ -93,11 +104,39 @@ describe("checkoutPrBranch", () => {
   });
 });
 
+describe("configureGitIdentity", () => {
+  beforeEach(() => { execCalls.length = 0; });
+
+  it("sets both user.name and user.email", async () => {
+    await configureGitIdentity();
+    expect(execCalls.some((c) => c.includes("user.name"))).toBe(true);
+    expect(execCalls.some((c) => c.includes("user.email"))).toBe(true);
+  });
+});
+
+describe("getHeadSha", () => {
+  beforeEach(() => { execCalls.length = 0; headSha = "abcdef1234567890\n"; });
+
+  it("returns the trimmed HEAD sha", async () => {
+    const sha = await getHeadSha();
+    expect(sha).toBe("abcdef1234567890");
+    expect(execCalls.some((c) => c[0] === "git" && c.includes("rev-parse"))).toBe(true);
+  });
+});
+
 describe("commitAndPush", () => {
   beforeEach(() => {
     execCalls.length = 0;
     statusOutput = "";
     revListCount = "0\n";
+  });
+
+  it("no longer sets git identity itself (identity is configured before Kiro runs)", async () => {
+    statusOutput = "M  src/foo.ts\n";
+    revListCount = "1\n";
+    await commitAndPush("kiro/1-fix", "msg", "abc123");
+    expect(execCalls.some((c) => c.includes("user.name"))).toBe(false);
+    expect(execCalls.some((c) => c.includes("user.email"))).toBe(false);
   });
 
   it("returns false and skips push when working tree is clean and branch has no new commits", async () => {

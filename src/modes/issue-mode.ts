@@ -7,7 +7,9 @@ import { postProgressComment, updateComment } from "../github/comment.js";
 import {
   createBranch,
   commitAndPush,
+  configureGitIdentity,
   getDefaultBranch,
+  getHeadSha,
   openPullRequest,
 } from "../github/pr.js";
 import { parseKiroOutput } from "../utils/extract-output.js";
@@ -56,6 +58,11 @@ export async function runIssueMode(
   const commentId = await postProgressComment(octokit, ctx.owner, ctx.repo, issueNumber);
 
   try {
+    // Set the committer identity and snapshot HEAD before running Kiro, so any
+    // commits have an author and we count exactly what this run adds.
+    await configureGitIdentity();
+    const startSha = await getHeadSha();
+
     const userRequest = ctx.issueBody ?? ctx.prBody ?? "";
     const prompt = await buildPrompt(ctx, userRequest);
     const { output, exitCode } = await runKiro(prompt, apiKey);
@@ -77,7 +84,7 @@ export async function runIssueMode(
     const hadChanges = await commitAndPush(
       branchName,
       `chore: kiro changes for #${issueNumber}`,
-      `origin/${baseBranch}`
+      startSha
     );
 
     let prUrl: string | undefined;

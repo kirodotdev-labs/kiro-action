@@ -12,7 +12,9 @@ import {
   createBranch,
   checkoutPrBranch,
   commitAndPush,
+  configureGitIdentity,
   getDefaultBranch,
+  getHeadSha,
   openPullRequest,
 } from "../github/pr.js";
 import { parseKiroOutput } from "../utils/extract-output.js";
@@ -51,6 +53,21 @@ export async function runCommentMode(
   }
 
   try {
+    const isOnPr = !!ctx.prNumber;
+
+    // Prepare git state before running Kiro: set the committer identity, and on
+    // a PR check out the PR branch so Kiro reads and edits the branch under
+    // discussion rather than the checked-out default branch. Checking out after
+    // Kiro ran can fail — its uncommitted edits would block the branch switch.
+    await configureGitIdentity();
+    let prBranchName: string | undefined;
+    if (isOnPr) {
+      prBranchName = await checkoutPrBranch(octokit, ctx.owner, ctx.repo, ctx.prNumber!);
+    }
+    // Snapshot HEAD so we count exactly the commits this run adds, whether Kiro
+    // commits them itself or leaves them for commitAndPush.
+    const startSha = await getHeadSha();
+
     const prompt = await buildPrompt(ctx, "");
     const { output, exitCode } = await runKiro(prompt, apiKey);
 
@@ -66,17 +83,14 @@ export async function runCommentMode(
     const { prTitle: extractedTitle, summary } = parseKiroOutput(output);
     const displaySummary = summary ?? output;
 
-    const isOnPr = !!ctx.prNumber;
-    let branchName: string;
     let prUrl: string | undefined;
 
     if (isOnPr) {
-      // Comment on an existing PR — push to its branch directly
-      branchName = await checkoutPrBranch(octokit, ctx.owner, ctx.repo, ctx.prNumber!);
+      // Comment on an existing PR — push to its (already checked-out) branch
       const hadChanges = await commitAndPush(
-        branchName,
+        prBranchName!,
         `chore: kiro changes for #${issueNumber}`,
-        `origin/${branchName}`
+        startSha
       );
 
       const prHtmlUrl = `https://github.com/${ctx.owner}/${ctx.repo}/pull/${ctx.prNumber}`;
@@ -85,16 +99,16 @@ export async function runCommentMode(
         : `✅ Kiro completed the task but made no file changes.\n\n<details><summary>Summary</summary>\n\n${displaySummary}\n</details>`;
 
       await updateComment(octokit, ctx.owner, ctx.repo, commentId, finalBody);
-      return { branchName: hadChanges ? branchName : undefined, prUrl: hadChanges ? prHtmlUrl : undefined, output };
+      return { branchName: hadChanges ? prBranchName : undefined, prUrl: hadChanges ? prHtmlUrl : undefined, output };
 
     } else {
       // Comment on an issue — create a fresh timestamped branch and open a PR
       const baseBranch = await getDefaultBranch(octokit, ctx.owner, ctx.repo);
-      branchName = await createBranch("issue", issueNumber);
+      const branchName = await createBranch("issue", issueNumber);
       const hadChanges = await commitAndPush(
         branchName,
         `chore: kiro changes for #${issueNumber}`,
-        `origin/${baseBranch}`
+        startSha
       );
 
       if (hadChanges) {
