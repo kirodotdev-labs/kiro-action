@@ -34,7 +34,7 @@ src/
     issue-mode.ts          # Handles label + assignment triggers (shared)
     auto-mode.ts           # Handles explicit prompt: input
   prompt/build-prompt.ts   # Builds context-rich prompt for Kiro
-  kiro/runner.ts           # Spawns kiro-cli chat --no-interactive, returns cleaned output
+  kiro/runner.ts           # Spawns kiro-cli chat --no-interactive --v3, returns cleaned stdout
   utils/
     auth.ts                # Validates KIRO_API_KEY
     ansi.ts                # Strips ANSI escape codes (workaround for kirodotdev/kiro#7929)
@@ -43,9 +43,11 @@ src/
 
 ## CLI installation
 
-Kiro CLI is installed via the official script at `https://cli.kiro.dev/install`. Version is resolved at runtime from `https://prod.download.cli.kiro.dev/stable/latest/manifest.json` for cache keying. The binary is `kiro-cli`, installed to `~/.local/bin/`.
+Kiro CLI is installed via the official script at `https://cli.kiro.dev/install`, called with `--force --no-modify-path` (and `--version <x.y.z>` when `kiro_version` is pinned). For `latest`, the version is resolved from `https://prod.download.cli.kiro.dev/stable/latest/manifest.json` — that manifest exists only for the latest release. The version is the cache key. The binary is `kiro-cli`, installed to `~/.local/bin/`.
 
-The direct binary CDN returns 403 for non-script downloads, so `curl | bash` is currently the only supported install path. The manifest is used for version metadata only.
+## Kiro CLI engine
+
+Kiro CLI 3.x ships two agent engines. A headless run with no engine flag picks V2, except that `--trust-all-tools` switches it to V3. The runner always passes `--v3` unless `kiro_args` already names an engine (`--v2`, `--v3`, `--agent-engine`). Kiro's reply goes to stdout; stderr (V3 engine logs, V2 tool progress) is included in the output only when the run fails.
 
 ## Commands
 

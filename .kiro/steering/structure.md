@@ -35,7 +35,7 @@ src/
   prompt/
     build-prompt.ts        # Builds the context-rich prompt passed to Kiro
   kiro/
-    runner.ts              # Spawns kiro-cli chat --no-interactive, returns cleaned output
+    runner.ts              # Spawns kiro-cli chat --no-interactive --v3, returns cleaned stdout
   utils/
     auth.ts                # Validates KIRO_API_KEY
     ansi.ts                # Strips ANSI escape codes from CLI output
