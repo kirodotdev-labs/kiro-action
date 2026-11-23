@@ -19,10 +19,12 @@ type FakeProc = {
 
 let spawnCallback: ((proc: FakeProc) => void) | null = null;
 let lastSpawnArgs: string[] = [];
+let lastSpawnEnv: Record<string, string | undefined> = {};
 
 mock.module("child_process", () => ({
-  spawn: (_cmd: string, args: string[], _opts: unknown) => {
+  spawn: (_cmd: string, args: string[], opts: { env: Record<string, string | undefined> }) => {
     lastSpawnArgs = args;
+    lastSpawnEnv = opts.env;
     const proc = new EventEmitter() as FakeProc;
     proc.stdout = new EventEmitter();
     proc.stderr = new EventEmitter();
@@ -32,7 +34,7 @@ mock.module("child_process", () => ({
   },
 }));
 
-const { runKiro, buildKiroArgs } = await import("../src/kiro/runner");
+const { runKiro, buildKiroArgs, createLineLogger } = await import("../src/kiro/runner");
 
 function makeProc(): FakeProc {
   const proc = new EventEmitter() as FakeProc;
@@ -114,6 +116,38 @@ describe("runKiro", () => {
     expect(result.output).toContain("auth failed");
   });
 
+  it("redacts the API key and GitHub token from the output", async () => {
+    inputs["github_token"] = "ghs_exampletoken123";
+    spawnCallback = (proc) => {
+      setImmediate(() => {
+        proc.stdout.emit("data", Buffer.from("key=kiro-secret-key-xyz\n"));
+        proc.stderr.emit("data", Buffer.from("token ghs_exampletoken123 rejected\n"));
+        proc.emit("close", 1);
+      });
+    };
+    const result = await runKiro("do something", "kiro-secret-key-xyz");
+    expect(result.output).toBe("key=***\ntoken *** rejected");
+    delete inputs["github_token"];
+  });
+
+  it("passes KIRO_API_KEY but not action inputs or the runtime token to kiro-cli", async () => {
+    process.env.INPUT_KIRO_API_KEY = "input-key-value";
+    process.env.INPUT_GITHUB_TOKEN = "input-token-value";
+    process.env.ACTIONS_RUNTIME_TOKEN = "runtime-token-value";
+    spawnCallback = (proc) => {
+      setImmediate(() => proc.emit("close", 0));
+    };
+    await runKiro("do something", "the-api-key");
+    expect(lastSpawnEnv.KIRO_API_KEY).toBe("the-api-key");
+    expect(lastSpawnEnv.INPUT_KIRO_API_KEY).toBeUndefined();
+    expect(lastSpawnEnv.INPUT_GITHUB_TOKEN).toBeUndefined();
+    expect(lastSpawnEnv.ACTIONS_RUNTIME_TOKEN).toBeUndefined();
+    expect(lastSpawnEnv.PATH).toBe(process.env.PATH);
+    delete process.env.INPUT_KIRO_API_KEY;
+    delete process.env.INPUT_GITHUB_TOKEN;
+    delete process.env.ACTIONS_RUNTIME_TOKEN;
+  });
+
   it("rejects when spawn itself fails (binary not found)", async () => {
     spawnCallback = (proc) => {
       setImmediate(() => {
@@ -153,5 +187,36 @@ describe("buildKiroArgs", () => {
   it("keeps the prompt as the final positional argument", () => {
     const args = buildKiroArgs("multi word prompt", "--agent code-reviewer");
     expect(args[args.length - 1]).toBe("multi word prompt");
+  });
+});
+
+describe("createLineLogger", () => {
+  it("logs whole lines even when a line arrives split across chunks", () => {
+    const lines: string[] = [];
+    const logger = createLineLogger((l) => lines.push(l));
+    logger.write(Buffer.from("first li"));
+    logger.write(Buffer.from("ne\nsecond "));
+    expect(lines).toEqual(["first line"]);
+    logger.write(Buffer.from("line\n"));
+    logger.write(Buffer.from("tail without newline"));
+    logger.flush();
+    expect(lines).toEqual(["first line", "second line", "tail without newline"]);
+  });
+
+  it("skips blank lines and strips ANSI codes", () => {
+    const lines: string[] = [];
+    const logger = createLineLogger((l) => lines.push(l));
+    logger.write(Buffer.from("\n  \n\x1b[32mgreen\x1b[0m\n"));
+    logger.flush();
+    expect(lines).toEqual(["green"]);
+  });
+
+  it("does not break multi-byte characters split across chunks", () => {
+    const lines: string[] = [];
+    const logger = createLineLogger((l) => lines.push(l));
+    const bytes = Buffer.from("✅ done\n");
+    logger.write(bytes.subarray(0, 1));
+    logger.write(bytes.subarray(1));
+    expect(lines).toEqual(["✅ done"]);
   });
 });

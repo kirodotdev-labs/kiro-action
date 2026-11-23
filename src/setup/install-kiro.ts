@@ -4,6 +4,7 @@ import * as exec from "@actions/exec";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { childEnv } from "../utils/env.js";
 
 const MANIFEST_URL =
   "https://prod.download.cli.kiro.dev/stable/latest/manifest.json";
@@ -62,11 +63,22 @@ export async function installKiro(): Promise<void> {
 
   const cacheHit = await cache.restoreCache([KIRO_BIN_DIR], cacheKey);
   if (cacheHit && fs.existsSync(KIRO_BINARY)) {
-    core.addPath(KIRO_BIN_DIR);
     core.info(`Kiro CLI ${version} restored from cache.`);
-    return;
+  } else {
+    await runInstallScript(version, requested);
+    await cache.saveCache([KIRO_BIN_DIR], cacheKey);
   }
 
+  core.addPath(KIRO_BIN_DIR);
+  // Log what's actually on disk — the cache key comes from the manifest, which
+  // could lag a release published mid-install.
+  await exec.exec(KIRO_BINARY, ["--version"]);
+}
+
+async function runInstallScript(
+  version: string,
+  requested: string | undefined,
+): Promise<void> {
   // The official install script resolves the right archive for the platform
   // (including the musl fallback on older glibc) and verifies its checksum.
   // Script arguments are passed positionally via "$@" rather than interpolated
@@ -82,7 +94,7 @@ export async function installKiro(): Promise<void> {
     ],
     {
       env: {
-        ...process.env,
+        ...childEnv(),
         KIRO_CLI_SKIP_SETUP: "1",
       },
     },
@@ -93,12 +105,5 @@ export async function installKiro(): Promise<void> {
       `Kiro CLI installation failed: binary not found at ${KIRO_BINARY}`,
     );
   }
-
-  core.addPath(KIRO_BIN_DIR);
   core.info(`Kiro CLI ${version} installed successfully.`);
-  // Log what actually landed — the cache key comes from the manifest, which
-  // could lag a release published mid-install.
-  await exec.exec(KIRO_BINARY, ["--version"]);
-
-  await cache.saveCache([KIRO_BIN_DIR], cacheKey);
 }
