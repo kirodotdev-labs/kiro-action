@@ -25,8 +25,9 @@ jobs:
       - uses: kirodotdev-labs/kiro-action@v0
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
-          # --agent loads .kiro/agents/code-reviewer.json
-          # --no-trust-all-tools restricts the agent to its allowedTools list
+          # --agent loads .kiro/agents/code-reviewer.json. Without
+          # --trust-all-tools, Kiro only runs the tools the agent's
+          # allowedTools list (or ~/.kiro/settings/permissions.yaml) allows.
           kiro_args: '--agent code-reviewer'
           prompt: |
             Review pull request #${{ github.event.pull_request.number }}

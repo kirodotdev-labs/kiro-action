@@ -16,7 +16,7 @@
 
 - Source lives in `src/`; the entry point is `src/index.ts`.
 - The build bundles everything into a single **minified `dist/index.js`**, which is **committed to the repo** — GitHub runs the bundled output, not the source. Always rebuild and commit `dist/` when changing `src/`.
-- The Kiro CLI itself is installed at runtime via the official script (`https://cli.kiro.dev/install`); the binary is `kiro-cli`, installed to `~/.local/bin/`. Version is resolved from the stable manifest for cache keying only (direct binary CDN downloads return 403, so `curl | bash` is the only supported install path).
+- The Kiro CLI itself is installed at runtime via the official script (`https://cli.kiro.dev/install`); the binary is `kiro-cli`, installed to `~/.local/bin/`. The version comes from the `kiro_version` input (`latest` resolves via the stable manifest) and is used as the cache key; the script is called with `--force --no-modify-path` plus `--version` when pinned. Every run passes `--v3` unless `kiro_args` names an engine (`--v2`, `--v3`, `--agent-engine`).
 
 ## Common commands
 
