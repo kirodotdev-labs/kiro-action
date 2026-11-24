@@ -34,7 +34,7 @@ inputs:
     default: 'kiro/'
     required: false
   kiro_args:
-    description: 'Additional arguments passed to kiro-cli chat (e.g. "--agent code-reviewer"). The V3 engine is used unless this includes --v2.'
+    description: 'Additional arguments passed to kiro-cli chat (e.g. "--agent code-reviewer"). Runs use the Kiro CLI V3 engine.'
     default: '--trust-all-tools'
     required: false
   kiro_version:

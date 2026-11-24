@@ -12,8 +12,8 @@ export interface RunResult {
 
 // A headless run that names no engine runs V2 — unless --trust-all-tools is
 // passed, which switches it to V3. Pin V3 explicitly so the engine doesn't
-// silently depend on which other flags the user put in kiro_args. Users can
-// still opt back into V2 with `--v2` (or `--agent-engine v2`).
+// silently depend on which other flags the user put in kiro_args. If kiro_args
+// already names an engine, don't add a second, conflicting flag.
 const DEFAULT_ENGINE_FLAG = "--v3";
 
 function hasEngineFlag(args: string[]): boolean {

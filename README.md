@@ -111,7 +111,7 @@ The action installs the latest stable Kiro CLI on each run (unless you pin `kiro
 
 The action runs Kiro on the [V3 agent engine](https://kiro.dev/docs/cli/agent-harness/) — the same harness as the Kiro IDE — by passing `--v3` to every run. Left to itself, a headless `kiro-cli` run picks V2 or V3 depending on which other flags are set, so the action pins it.
 
-- **Stay on V2** — add `--v2` to `kiro_args` (e.g. `kiro_args: '--v2 --trust-all-tools'`). V2 no longer receives new features.
+- **V3 only** — the action doesn't support the V2 engine or Kiro CLI 2.x. Amazon Linux 2 runners aren't supported, since Kiro CLI 3.x doesn't run there.
 - **Tool permissions** — `--trust-all-tools` (the default) and `--trust-tools` still work. For finer control, V3 reads [`permissions.yaml`](https://kiro.dev/docs/cli/v3/permissions/) from the runner user's home directory (not the repo), so write it in a step before the action:
 
   ```yaml
@@ -134,8 +134,8 @@ The action runs Kiro on the [V3 agent engine](https://kiro.dev/docs/cli/agent-ha
   ```
 
   Tool calls that aren't allowed are denied rather than prompted for, since nobody is there to approve them.
-- **Repo config** — `.kiro/steering/` and `.kiro/agents/*.json` load as before; V2-format agent files (including `allowedTools`) are accepted.
-- **Pin a version** — set `kiro_version: '3.5.0'` to hold the CLI at a known release. Kiro CLI 3.x doesn't support Amazon Linux 2; on self-hosted AL2 runners, pin the last 2.x release (`kiro_version: '2.37.1'`).
+- **Repo config** — `.kiro/steering/` and `.kiro/agents/*.json` load as before; agent files written for CLI 2.x (including `allowedTools`) still work.
+- **Pin a version** — set `kiro_version: '3.5.0'` to hold the CLI at a known release.
 
 The CLI is cached per version. Some events, including comment-triggered runs, only get read access to the cache, so on those runs a new CLI version is reinstalled each time until a push, `schedule` or `workflow_dispatch` run on the default branch saves it. A scheduled run of any Kiro workflow keeps the cache filled.
 
