@@ -47,7 +47,7 @@ Kiro CLI is installed via the official script at `https://cli.kiro.dev/install`,
 
 ## Kiro CLI engine
 
-Kiro CLI 3.x ships two agent engines. A headless run with no engine flag picks V2, except that `--trust-all-tools` switches it to V3. The runner always passes `--v3` unless `kiro_args` already names an engine (`--v2`, `--v3`, `--agent-engine`). Kiro's reply goes to stdout; stderr (V3 engine logs, V2 tool progress) is included in the output only when the run fails.
+Kiro CLI 3.x ships two agent engines. A headless run with no engine flag picks V2, except that `--trust-all-tools` switches it to V3. The action supports V3 only: the runner always passes `--v3`, unless `kiro_args` already names an engine (`--v2`, `--v3`, `--agent-engine`), so it never sends conflicting flags. Kiro's reply goes to stdout; stderr (V3 engine logs, V2 tool progress) is included in the output only when the run fails.
 
 ## Commands
 
