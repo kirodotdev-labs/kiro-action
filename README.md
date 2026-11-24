@@ -137,6 +137,8 @@ The action runs Kiro on the [V3 agent engine](https://kiro.dev/docs/cli/agent-ha
 - **Repo config** — `.kiro/steering/` and `.kiro/agents/*.json` load as before; V2-format agent files (including `allowedTools`) are accepted.
 - **Pin a version** — set `kiro_version: '3.5.0'` to hold the CLI at a known release. Kiro CLI 3.x doesn't support Amazon Linux 2; on self-hosted AL2 runners, pin the last 2.x release (`kiro_version: '2.37.1'`).
 
+The CLI is cached per version. Some events, including comment-triggered runs, only get read access to the cache, so on those runs a new CLI version is reinstalled each time until a push, `schedule` or `workflow_dispatch` run on the default branch saves it. A scheduled run of any Kiro workflow keeps the cache filled.
+
 ## Outputs
 
 | Output | Description |

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Official GitHub Action for Kiro — the AI-powered agentic IDE by AWS",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "bun build src/index.ts --outfile dist/index.js --target node --minify",
     "typecheck": "tsc --noEmit",

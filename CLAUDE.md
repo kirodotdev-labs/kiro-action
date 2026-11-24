@@ -43,7 +43,7 @@ src/
 
 ## CLI installation
 
-Kiro CLI is installed via the official script at `https://cli.kiro.dev/install`, called with `--force --no-modify-path` (and `--version <x.y.z>` when `kiro_version` is pinned). For `latest`, the version is resolved from `https://prod.download.cli.kiro.dev/stable/latest/manifest.json` — that manifest exists only for the latest release. The version is the cache key. The binary is `kiro-cli`, installed to `~/.local/bin/`.
+Kiro CLI is installed via the official script at `https://cli.kiro.dev/install`, called with `--force --no-modify-path` (and `--version <x.y.z>` when `kiro_version` is pinned). For `latest`, the version is resolved from `https://prod.download.cli.kiro.dev/stable/latest/manifest.json` — that manifest exists only for the latest release. The version is the cache key. The binary is `kiro-cli`, installed to `~/.local/bin/`. Some events (e.g. `issue_comment`) get a read-only cache token, so the cache is saved by push, schedule or dispatch runs on the default branch.
 
 ## Kiro CLI engine
 
